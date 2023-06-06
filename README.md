@@ -1,1 +1,1 @@
-# smart-master
+# Git-smarts ⚙️
