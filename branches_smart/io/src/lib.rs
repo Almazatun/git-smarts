@@ -18,7 +18,7 @@ impl Metadata for ProgramMetadata {
 pub struct Program {
     pub owner: ActorId,
     // <repository_id, Repository>
-    pub state:  BTreeMap<u32,  Repository>
+    pub state:  BTreeMap<u32, Repository>
 }
 
 #[derive(Debug, TypeInfo, Decode, Encode)]
@@ -104,6 +104,16 @@ impl Repository {
     }
 
     pub fn delete_collaborator(&mut self, actor_id: ActorId) -> ActorId {
+        if !self.is_exist_collaborator(actor_id) {
+            panic!("Invalid collaborator id")
+        }
+
+        self.collaborators.retain(|collaborator| collaborator.id != actor_id);
+
+        actor_id
+    }
+
+    pub fn clear_collaborator(&mut self, actor_id: ActorId) -> ActorId {
         if !self.is_exist_collaborator(actor_id) {
             panic!("Invalid collaborator id")
         }

@@ -15,7 +15,7 @@ impl Program {
     }
 
     fn is_exist_repo_by_name(&self, name: String) -> bool {
-        for (_, repo) in self.state.clone().into_iter() {
+        for (key, repo) in self.state.clone().into_iter() {
             if repo.name == name {
                 return true;
             }
@@ -25,7 +25,7 @@ impl Program {
     }
 
     fn is_exist_repo(&self, id: u32) -> bool {
-        if let Some(_) = self.state.get(&id) {
+        if let Some(repo) = self.state.get(&id) {
             return true;
         } else {
             return  false;
@@ -135,10 +135,11 @@ extern "C" fn handle() {
                 panic!("Invalid repository id")
             }
 
-            if let Some(repo) = repos_program.state.get_mut(&repo_id) {
+            if let Some(repo) = repos_program.state.get(&repo_id) {
               if !repo.is_exist_collaborator(collaborator_id) {
                 panic!("Invalid collaborator id")
               } else {
+                // TODO how fix
                 repo.delete_collaborator(collaborator_id);
               }
             } 
