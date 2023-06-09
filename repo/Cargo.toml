@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 gstd = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68", features = ["debug"] }
 repo-io = { path = "io" }
+user-io = { path = "../user/io"}
 # user-io = { path = "../user/io"}
 primitive-types = { version = "0.12.1", default-features = false }
 scale-info = { version = "2.6.0", default-features = false }
@@ -22,6 +23,7 @@ gtest = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab
 
 [build-dependencies]
 repo-io = { path = "io" }
+user-io = { path = "../user/io"}
 # user-io = { path = "../user/io"}
 gear-wasm-builder = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68" }
 

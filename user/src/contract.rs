@@ -43,14 +43,10 @@ impl Program {
             self.repos.insert(result.1, Repository { id: result.1, name: create_repo_input.name })
         }
 
-    fn is_exist_branch_by_name(&self, name: String) -> bool {
-        for (_, repo) in self.repos.iter() {
-            if repo.name == name {
-                return true;
-            }
+    fn rename_repo(&mut self, repo_id: ActorId, name: String) {
+        if let Some(repo) = self.repos.get_mut(&repo_id) {
+            repo.name = name
         }
-        
-        false
     }
 }
 
@@ -103,14 +99,8 @@ extern "C" fn handle() {
         }
 
         UserActionRequest::RenameRepository(name) => {
-            // user actor_id
             let actor_id = source();
-            
-            if actor_id != user_program.owner {
-               panic!("Access denied") 
-            }
-
-            // TODO
+            user_program.rename_repo(actor_id, name)
         }
     }
 }

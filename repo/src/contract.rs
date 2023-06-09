@@ -1,4 +1,4 @@
-use gstd::{debug, ActorId, msg::{load, reply, source}, exec::{random}, prelude::*};
+use gstd::{debug, ActorId, msg::{load, send, source}, exec::{random}, prelude::*};
 use repo_io::{
     Branch, 
     Commit, 
@@ -10,21 +10,27 @@ use repo_io::{
     CreateBranchInput, 
     DeleteBranchInput,
 };
+use user_io:: {
+    UserActionRequest,
+    UserActionResponse,
+};
 // use uuid::{Uuid};
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
 pub struct Program {
     pub owner: ActorId,
     pub name: String,
+    pub user_program_id: ActorId,
     pub collaborator: BTreeMap<ActorId, ActorId>,
     pub branches:  BTreeMap<u32,  Branch>,
 }
 
 impl Program {
-    fn new(owner: ActorId, name: String) -> Self {
+    fn new(owner: ActorId, name: String, user_program_id: ActorId) -> Self {
         Self { 
             owner,
             name,
+            user_program_id,
             collaborator: BTreeMap::new(),
             branches: BTreeMap::new(),
          }
@@ -73,9 +79,13 @@ impl Program {
     fn rename_branch(&mut self, rename_branch_input: RenameBranchInput) {
         if let Some(branch) = self.branches.get_mut(&rename_branch_input.id) {
             if branch.id == rename_branch_input.id {
-                branch.rename(rename_branch_input.name)
+                branch.rename(rename_branch_input.name);
 
-                // TODO send message to user contract
+                send(
+                    self.user_program_id,
+                    UserActionRequest::RenameRepository(rename_branch_input.name),
+                    0
+                )
             }
         }
     }
@@ -108,7 +118,7 @@ unsafe extern "C" fn init() {
     let init_msg: InitProgram  = load().expect("Unable to decode init program");
     debug!("{:?} init program msg", init_msg);
 
-    let program = Program::new(init_msg.owner, init_msg.name);
+    let program = Program::new(init_msg.owner, init_msg.name, source());
 
      unsafe { CONTRACT = Some(program)  }
 }

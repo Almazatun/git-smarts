@@ -18,6 +18,7 @@ impl Metadata for ProgramMetadata {
 pub struct Program {
     pub owner: ActorId,
     pub name: String,
+    pub user_program_id: ActorId,
     pub collaborator: BTreeMap<ActorId, ActorId>,
     pub branches:  BTreeMap<u32,  Branch>,
 }
@@ -26,6 +27,7 @@ pub struct Program {
 pub struct InitProgram {
     pub owner: ActorId,
     pub name: String,
+    pub user_program_id: ActorId,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug)]
@@ -70,7 +72,7 @@ pub struct Branch {
    // pub updated_at: DateTime,
 }
 
-#[derive(Encode, Decode, TypeInfo, Debug)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone)]
 pub struct Commit {
    pub id: u32,
    pub owner: ActorId,
@@ -137,14 +139,12 @@ impl Branch {
         self
     }
 
-    pub fn add_commit(&mut self, commit: Commit) -> Commit {
+    pub fn add_commit(&mut self, commit: Commit) {
         self.commits.push(commit);
-
-        commit
     }
 
     pub fn get_commits(&self) -> Vec<Commit> {
-        self.commits
+        self.commits.clone()
     }
 
     pub fn is_exist_commit_by_hash(&self, hash: String) -> bool {
@@ -158,12 +158,6 @@ impl Branch {
     }
 
     pub fn get_commit_by_hash(&self, hash: String) -> Option<Commit> {
-        for c in self.commits.iter() {
-            if c.hash == hash {
-                 return Some(c.clone());
-            }
-        }
-
-        None
+        self.commits.iter().cloned().find(|commit| commit.hash.eq(&hash))
     }
 }
