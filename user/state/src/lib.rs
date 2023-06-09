@@ -11,12 +11,12 @@ pub mod metafns {
         state
     }
 
-    pub fn get_user(state: State, actor_id: ActorId) -> Vec<Repository> {
-        let repos: Vec<Repository> = vec![];
+    pub fn get_user_repos(state: State) -> Vec<Repository> {
+        let mut repos: Vec<Repository> = vec![];
 
 
         for (_, repo) in state.repos.iter() {
-            repos.push(repo)
+            repos.push(repo.clone())
         }
 
         repos

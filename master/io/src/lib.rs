@@ -26,6 +26,7 @@ pub struct Program {
 #[derive(Debug, TypeInfo, Decode, Encode)]
 pub struct InitProgram {
     pub user_prog_code_id: CodeId,
+    pub repo_prog_code_id: CodeId,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug)]

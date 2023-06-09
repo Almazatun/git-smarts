@@ -1,5 +1,6 @@
 use gstd::{debug, CodeId, prelude::*, ActorId, msg::{reply, source, load}, prog::ProgramGenerator};
-use master_io::{InitProgram, ActionRequest, ActionResponse};
+use master_io::{InitProgram, ActionRequest, ActionResponse, RegisterUserInput};
+use user_io::{InitUserProgram};
 
 static mut CONTRACT: Option<Program> = None;
 
@@ -10,12 +11,14 @@ pub struct Program {
     pub state:  BTreeMap<ActorId, ActorId>,
     // user program code id
     pub user_prog_code_id: CodeId,
+    pub repo_prog_code_id: CodeId,
 }
 
 impl Program {
     fn new(&self, init_program: InitProgram) -> Self {
         return Self { 
             user_prog_code_id: init_program.user_prog_code_id,
+            repo_prog_code_id: init_program.repo_prog_code_id,
             state: BTreeMap::new(),
             owner: self.owner, 
         }
@@ -25,10 +28,17 @@ impl Program {
         return self.state.contains_key(&actor_id);
     }
 
-    fn init_user_prog(&self) {
+    fn init_user_prog(&self, register_user_input: RegisterUserInput) {
+        let payload = InitUserProgram{
+            owner: self.owner,
+            repo_code_id: self.repo_prog_code_id,
+            first_name: register_user_input.first_name,
+            last_name: register_user_input.last_name,
+            username: register_user_input.username,
+        };
         ProgramGenerator::create_program(
             self.user_prog_code_id,
-            self.owner, 
+            payload.encode(),
             0,
         ).unwrap();
     }
@@ -62,7 +72,7 @@ extern "C" fn handle() {
                 panic!("User already exists");
             }
 
-            git_program.init_user_prog();
+            git_program.init_user_prog(register_user_input);
             git_program.state.insert(actor_id, actor_id);
 
             reply(ActionResponse::RegisterUser{ id: actor_id }, 0).expect("Unable to reply");

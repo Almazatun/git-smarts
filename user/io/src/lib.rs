@@ -6,7 +6,7 @@ use gstd::{ActorId,  prelude::*, CodeId};
 pub struct ProgramMetadata;
 
 impl Metadata for ProgramMetadata {
-    type Init = In<InitProgram>; //owner
+    type Init = In<InitUserProgram>;
     type Handle = InOut<UserActionRequest, UserActionResponse>;
     type Others = ();
     type Reply = ();
@@ -25,7 +25,7 @@ pub struct Program {
 }
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
-pub struct InitProgram {
+pub struct InitUserProgram {
     pub owner: ActorId,
     pub first_name: String,
     pub last_name: String,

@@ -1,5 +1,5 @@
 use gstd::{debug, prog::ProgramGenerator, ActorId, msg::{load, source, reply}, prelude::*, CodeId};
-use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitProgram, Repository, CreateRepositoryInput};
+use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitUserProgram, Repository, CreateRepositoryInput};
 // use user_io::{Collaborator, RepoActionRequests, RepoActionResponses};
 // use uuid::{Uuid};
 
@@ -14,7 +14,7 @@ pub struct Program {
 }
 
 impl Program {
-    fn new(init_program: InitProgram) -> Self {
+    fn new(init_program: InitUserProgram) -> Self {
         Self { 
             owner: init_program.owner,
             first_name: init_program.first_name, 
@@ -54,7 +54,7 @@ static mut CONTRACT: Option<Program> = None;
 
 #[no_mangle]
 unsafe extern "C" fn init() {
-    let init_msg: InitProgram  = load().expect("Unable to decode init program");
+    let init_msg: InitUserProgram  = load().expect("Unable to decode init program");
     debug!("{:?} init program msg", init_msg);
 
     let program = Program::new(init_msg);
