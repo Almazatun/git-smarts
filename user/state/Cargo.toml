@@ -1,5 +1,5 @@
 [package]
-name = "branches-state"
+name = "user-state"
 version = "0.1.0"
 edition = "2021"
 

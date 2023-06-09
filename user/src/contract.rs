@@ -1,22 +1,22 @@
-use gstd::{debug, prog::ProgramGenerator, ActorId, msg::{load, reply, source, send_for_reply}, exec::{random}, prelude::*};
+use gstd::{debug, prog::ProgramGenerator, ActorId, msg::{load, source, reply}, prelude::*, CodeId};
 use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitProgram, Repository, CreateRepositoryInput};
 // use user_io::{Collaborator, RepoActionRequests, RepoActionResponses};
 // use uuid::{Uuid};
 
-#[derive(Default, Encode, Decode, TypeInfo, Debug)]
+#[derive(Default, Encode, Decode, TypeInfo, Debug, Clone)]
 pub struct Program {
     pub owner: ActorId,
     pub first_name: String,
     pub last_name: String,
     pub username: String,
     pub repos: BTreeMap<ActorId, Repository>,
-    pub repo_code_id: ActorId,
+    pub repo_code_id: CodeId,
 }
 
 impl Program {
     fn new(init_program: InitProgram) -> Self {
         Self { 
-            owner, 
+            owner: init_program.owner,
             first_name: init_program.first_name, 
             last_name: init_program.last_name,
             username: init_program.username,
@@ -30,7 +30,7 @@ impl Program {
         self.last_name = update_input.last_name;
         self.username = update_input.username;
 
-        self
+        self.clone()
     }
 
     async fn create_repo(&mut self, create_repo_input: CreateRepositoryInput) {
@@ -40,7 +40,7 @@ impl Program {
                 0,
             ).unwrap();
 
-            self.repos.insert(result.1, Repository { id: result.1, name: create_repo_input.name })
+            self.repos.insert(result.1, Repository { id: result.1, name: create_repo_input.name });
         }
 
     fn rename_repo(&mut self, repo_id: ActorId, name: String) {
@@ -64,7 +64,7 @@ unsafe extern "C" fn init() {
 
 #[no_mangle]
 extern "C" fn handle() {
-    let new_msg: ActionRequest = load().expect("Unable to decode `ActionRequest`");
+    let new_msg: UserActionRequest = load().expect("Unable to decode `ActionRequest`");
     debug!("{:?} message", new_msg);
 
     let user_program = unsafe { CONTRACT.get_or_insert(Default::default()) };
@@ -100,7 +100,10 @@ extern "C" fn handle() {
 
         UserActionRequest::RenameRepository(name) => {
             let actor_id = source();
-            user_program.rename_repo(actor_id, name)
+            user_program.rename_repo(actor_id, name);
+
+            reply(UserActionResponse::RenameRepository { message: "Successfully rename repo".to_string() }, 0)
+            .expect("Unable to reply");
         }
     }
 }

@@ -1,7 +1,7 @@
 #![no_std]
 
 use gmeta::{InOut, Metadata, In, TypeInfo};
-use gstd::{ActorId,  prelude::*};
+use gstd::{ActorId,  prelude::*, CodeId};
 
 pub struct ProgramMetadata;
 
@@ -30,7 +30,7 @@ pub struct InitProgram {
     pub first_name: String,
     pub last_name: String,
     pub username: String,
-    pub repo_code_id: ActorId,
+    pub repo_code_id: CodeId,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug)]
@@ -60,7 +60,7 @@ pub struct CreateRepositoryInput {
     pub name: String,
 }
 
-#[derive(Encode, Debug, Decode, TypeInfo)]
+#[derive(Encode, Debug, Decode, TypeInfo, Clone)]
 pub struct Repository { 
     pub id: ActorId,
     pub name: String,

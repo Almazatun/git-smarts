@@ -1,4 +1,4 @@
-use gstd::{debug, ActorId, msg::{load, send, source}, exec::{random}, prelude::*};
+use gstd::{debug, ActorId, msg::{load, send, source, reply}, exec::{random}, prelude::*};
 use repo_io::{
     Branch, 
     Commit, 
@@ -6,14 +6,10 @@ use repo_io::{
     RepoActionRequests, 
     RepoActionResponses, 
     RenameBranchInput, 
-    RenameBranchInput, 
     CreateBranchInput, 
     DeleteBranchInput,
 };
-use user_io:: {
-    UserActionRequest,
-    UserActionResponse,
-};
+use user_io:: { UserActionRequest};
 // use uuid::{Uuid};
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
@@ -37,7 +33,7 @@ impl Program {
     }
 
     fn is_exist_branch_by_name(&self, name: String) -> bool {
-        for (_, br) in self.branches.inter() {
+        for (_, br) in self.branches.iter() {
             if br.name == name {
                 return true;
             }
@@ -47,7 +43,7 @@ impl Program {
     }
 
     fn is_exist_branch(&self, id: u32) -> bool {
-        for (_, br) in self.branches.inter() {
+        for (_, br) in self.branches.iter() {
             if br.id == id {
                 return true;
             }
@@ -57,7 +53,7 @@ impl Program {
     }
 
     fn is_exist_collaborator(&self, actor_id: ActorId) -> bool {
-        if let Some(c) = self.collaborator.get(&actor_id) {
+        if let Some(_) = self.collaborator.get(&actor_id) {
             return true
         }
 
@@ -65,11 +61,11 @@ impl Program {
     }
 
     fn add_collaborator(&mut self, actor_id: ActorId) {
-        self.collaborator.insert(actor_id, actor_id)
+        self.collaborator.insert(actor_id, actor_id);
     }
 
     fn delete_collaborator(&mut self, actor_id: ActorId) {
-        self.collaborator.remove(&actor_id)
+        self.collaborator.remove(&actor_id);
     }
 
     fn add_branch(&mut self, create_branch_input: CreateBranchInput) {
@@ -79,19 +75,19 @@ impl Program {
     fn rename_branch(&mut self, rename_branch_input: RenameBranchInput) {
         if let Some(branch) = self.branches.get_mut(&rename_branch_input.id) {
             if branch.id == rename_branch_input.id {
-                branch.rename(rename_branch_input.name);
+                let name = branch.rename(rename_branch_input.name);
 
                 send(
                     self.user_program_id,
-                    UserActionRequest::RenameRepository(rename_branch_input.name),
+                    UserActionRequest::RenameRepository(name),
                     0
-                )
+                );
             }
         }
     }
 
     fn delete_branch(&mut self, delete_branch_input: DeleteBranchInput) {
-        self.branches.remove(&delete_branch_input.branch_id)
+        self.branches.remove(&delete_branch_input.branch_id);
     }
 
     fn is_exits_branch_by_name(&self, name: String) -> bool {
@@ -105,7 +101,7 @@ impl Program {
     }
 
     fn push_commit(&mut self, branch_id: u32, commit: Commit) {
-        if let Some(branch) = self.branches.get_mut(&rename_branch_input.id) {
+        if let Some(branch) = self.branches.get_mut(&&branch_id) {
             branch.add_commit(commit)
         }
     }
@@ -138,7 +134,7 @@ extern "C" fn handle() {
                 panic!("Access denied")
             }
 
-            if repo_program.is_exist_branch_by_name(name) {
+            if repo_program.is_exist_branch_by_name(name.clone()) {
                 panic!("Already exists branch by name")
             }
 
@@ -174,7 +170,7 @@ extern "C" fn handle() {
                 panic!("Access denied")
             }
 
-            if repo_program.is_exist_branch(branch_id) {
+            if repo_program.is_exist_branch(delete_branch_input.branch_id) {
                 panic!("Invalid branch id")
             }
 
@@ -202,9 +198,9 @@ extern "C" fn handle() {
                 hash: push_input.hash,
                 description: push_input.description,
              };
-            repo_program.push_commit(push_input.branch_id, commit);
+            repo_program.push_commit(push_input.branch_id, commit.clone());
 
-           reply(RepoActionResponses::Push { msg: "Successfully commit".to_string() }, 0)
+           reply(RepoActionResponses::Push { msg: commit.clone() }, 0)
            .expect("Unable to reply");
         }
 

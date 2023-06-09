@@ -62,7 +62,7 @@ pub struct RenameBranchInput {
     pub name: String,
 }
 
-#[derive(Encode, Decode, TypeInfo, Debug)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone)]
 pub struct Branch {
    pub id: u32,
    pub owner: ActorId,
@@ -133,10 +133,10 @@ impl Branch {
         }
     }
 
-    pub fn rename(mut self, new_name: String) -> Self {
+    pub fn rename(&mut self, new_name: String) -> String {
         self.name = new_name;
 
-        self
+        self.name.clone()
     }
 
     pub fn add_commit(&mut self, commit: Commit) {
