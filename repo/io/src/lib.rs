@@ -6,7 +6,7 @@ use gstd::{ActorId,  prelude::*};
 pub struct ProgramMetadata;
 
 impl Metadata for ProgramMetadata {
-    type Init = In<InitProgram>;
+    type Init = In<InitRepoProgram>;
     type Handle = InOut<RepoActionRequests, RepoActionResponses>;
     type Others = ();
     type Reply = ();
@@ -24,14 +24,14 @@ pub struct Program {
 }
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
-pub struct InitProgram {
+pub struct InitRepoProgram {
     pub owner: ActorId,
     pub name: String,
-    pub user_program_id: ActorId,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug)]
 pub enum RepoActionRequests {
+    Rename(String),
     CreateBranch(String),
     RenameBranch(RenameBranchInput),
     DeleteBranch(DeleteBranchInput),
@@ -45,6 +45,7 @@ pub enum RepoActionRequests {
 
 #[derive(Encode, Debug, Decode, TypeInfo)]
 pub enum RepoActionResponses {
+    Rename{ msg: String },
     CreateBranch{ msg: String },
     RenameBranch{ msg: String },
     DeleteBranch{ msg: String },

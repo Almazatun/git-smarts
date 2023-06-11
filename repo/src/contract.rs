@@ -1,15 +1,17 @@
-use gstd::{debug, ActorId, msg::{load, send, source, reply}, exec::{random}, prelude::*};
+use core::panicking::panic;
+
+use gstd::{debug, ActorId, msg::{load, send, source, reply, send_for_reply, send_for_reply_as}, exec::{random}, prelude::*};
 use repo_io::{
     Branch, 
     Commit, 
-    InitProgram, 
+    InitRepoProgram, 
     RepoActionRequests, 
     RepoActionResponses, 
     RenameBranchInput, 
     CreateBranchInput, 
     DeleteBranchInput,
 };
-use user_io:: { UserActionRequest};
+use user_io:: {UserActionRequest, UserActionResponse};
 // use uuid::{Uuid};
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
@@ -60,6 +62,20 @@ impl Program {
         false    
     }
 
+    fn is_valid_user(&self, actor_id: ActorId) -> bool {
+        let mut result: bool = false;
+
+        if self.owner == actor_id {
+            return true
+        }
+
+        if self.is_exist_collaborator(actor_id) {
+            return true
+        }
+
+        false
+    }
+
     fn add_collaborator(&mut self, actor_id: ActorId) {
         self.collaborator.insert(actor_id, actor_id);
     }
@@ -75,13 +91,7 @@ impl Program {
     fn rename_branch(&mut self, rename_branch_input: RenameBranchInput) {
         if let Some(branch) = self.branches.get_mut(&rename_branch_input.id) {
             if branch.id == rename_branch_input.id {
-                let name = branch.rename(rename_branch_input.name);
-
-                send(
-                    self.user_program_id,
-                    UserActionRequest::RenameRepository(name),
-                    0
-                );
+                branch.rename(rename_branch_input.name);
             }
         }
     }
@@ -90,20 +100,29 @@ impl Program {
         self.branches.remove(&delete_branch_input.branch_id);
     }
 
-    fn is_exits_branch_by_name(&self, name: String) -> bool {
-        for (_, branch) in self.branches.iter(){
-            if branch.name == name {
-                return true;
-            }
-        }
-
-        false
-    }
-
     fn push_commit(&mut self, branch_id: u32, commit: Commit) {
         if let Some(branch) = self.branches.get_mut(&&branch_id) {
             branch.add_commit(commit)
         }
+    }
+
+   async fn rename(&mut self, name: String, user_id: ActorId) {
+    if repo_program.owner == user_id {
+        panic!("Access denied")
+    }
+    // TODO need to ask need it await here
+    let result = send_for_reply_as(
+        repo_program.user_program_id,
+        UserActionRequest::RenameRepository(name),
+        0
+    ).await();
+
+    match result {
+        Ok(UserActionResponse::Ok) => Ok(repo_program.rename(name)),
+        _ => Err("Repository by name already exists"),
+    };
+
+        self.name = name
     }
 }
 
@@ -111,7 +130,7 @@ static mut CONTRACT: Option<Program> = None;
 
 #[no_mangle]
 unsafe extern "C" fn init() {
-    let init_msg: InitProgram  = load().expect("Unable to decode init program");
+    let init_msg: InitRepoProgram  = load().expect("Unable to decode init program");
     debug!("{:?} init program msg", init_msg);
 
     let program = Program::new(init_msg.owner, init_msg.name, source());
@@ -119,18 +138,24 @@ unsafe extern "C" fn init() {
      unsafe { CONTRACT = Some(program)  }
 }
 
-#[no_mangle]
-extern "C" fn handle() {
+#[gstd::async_main]
+async fn main() {
     let new_msg: RepoActionRequests = load().expect("Unable to decode `ActionRequest`");
     debug!("{:?} message", new_msg);
 
     let repo_program = unsafe { CONTRACT.get_or_insert(Default::default()) };
 
     match new_msg {
+        RepoActionRequests::Rename(name) => {
+            repo_program.rename(name, user_id).await;
+            reply(RepoActionResponses::Rename { msg: "Successfully rename repo".to_string() }, 0)
+           .expect("Unable to reply");
+        }
+
         RepoActionRequests::CreateBranch(name) => {
             let user_id = source();
 
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
 
@@ -149,7 +174,7 @@ extern "C" fn handle() {
             let user_id = source();
             let branch_id = rename_branch_input.id;
 
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
 
@@ -166,7 +191,7 @@ extern "C" fn handle() {
         RepoActionRequests::DeleteBranch(delete_branch_input) => {
             let user_id = source();
         
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
 
@@ -183,7 +208,7 @@ extern "C" fn handle() {
         RepoActionRequests::Push(push_input) => {
             let user_id = source();
         
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
 
@@ -207,7 +232,7 @@ extern "C" fn handle() {
         RepoActionRequests::AddCollaborator(actor_id) => {
             let user_id = source();
         
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
             
@@ -220,7 +245,7 @@ extern "C" fn handle() {
         RepoActionRequests::DeleteCollaborator(actor_id) => {
             let user_id = source();
         
-            if user_id != repo_program.owner || !repo_program.is_exist_collaborator(user_id) {
+            if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
             

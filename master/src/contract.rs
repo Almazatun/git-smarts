@@ -30,7 +30,7 @@ impl Program {
 
     fn init_user_prog(&self, register_user_input: RegisterUserInput) {
         let payload = InitUserProgram{
-            owner: self.owner,
+            owner: register_user_input.owner.unwrap(),
             repo_code_id: self.repo_prog_code_id,
             first_name: register_user_input.first_name,
             last_name: register_user_input.last_name,
@@ -48,6 +48,7 @@ impl Program {
 unsafe extern "C" fn init() {
     let init_program_data: InitProgram  = load().expect("Unable to decode init program");
     debug!("{:?} init program", init_program_data);
+
     let init_program = Program::new(
         &Default::default(),
         init_program_data,
@@ -72,7 +73,12 @@ extern "C" fn handle() {
                 panic!("User already exists");
             }
 
-            git_program.init_user_prog(register_user_input);
+            let input_data = RegisterUserInput { 
+                owner: Some(actor_id), 
+                ..register_user_input
+            };
+
+            git_program.init_user_prog(input_data);
             git_program.state.insert(actor_id, actor_id);
 
             reply(ActionResponse::RegisterUser{ id: actor_id }, 0).expect("Unable to reply");

@@ -1,6 +1,6 @@
 use gstd::{debug, prog::ProgramGenerator, ActorId, msg::{load, source, reply}, prelude::*, CodeId};
-use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitUserProgram, Repository, CreateRepositoryInput};
-// use user_io::{Collaborator, RepoActionRequests, RepoActionResponses};
+use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitUserProgram, Repository};
+use repo_io::{InitRepoProgram};
 // use uuid::{Uuid};
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug, Clone)]
@@ -33,20 +33,40 @@ impl Program {
         self.clone()
     }
 
-    async fn create_repo(&mut self, create_repo_input: CreateRepositoryInput) {
+    fn create_repo(&mut self, create_repo: InitRepoProgram) {
             let result = ProgramGenerator::create_program(
                 self.repo_code_id,
-                self.owner, 
+                create_repo.encode(), 
                 0,
             ).unwrap();
 
-            self.repos.insert(result.1, Repository { id: result.1, name: create_repo_input.name });
+            self.repos.insert(result.1, Repository { id: result.1, name: create_repo.name });
         }
 
     fn rename_repo(&mut self, repo_id: ActorId, name: String) {
         if let Some(repo) = self.repos.get_mut(&repo_id) {
             repo.name = name
         }
+    }
+
+    fn get_repo(&self, repo_id: ActorId) -> Option<Repository> {
+        if let Some(repo) = self.repos.get(&repo_id).cloned() {
+            return Some(repo)
+        } else {
+            return None
+        }
+    }
+
+    fn get_repo_by_name(&self, name: String) -> Option<Repository> {
+        let mut result: Option<Repository>;
+
+        for (_, r) in self.repos.iter() {
+            if r.name == name {
+                return Some(r.clone())
+            }
+        }
+
+        None
     }
 }
 
@@ -91,8 +111,11 @@ extern "C" fn handle() {
             if actor_id != user_program.owner {
                panic!("Access denied") 
             }
-
-            user_program.create_repo(create_repo_input);
+            
+            user_program.create_repo(InitRepoProgram { 
+                owner: actor_id, 
+                name: create_repo_input.name
+            });
 
             reply(UserActionResponse::CreateRepository { message: "Successfully create repository dapp".to_string() }, 0)
             .expect("Unable to reply");
@@ -100,9 +123,31 @@ extern "C" fn handle() {
 
         UserActionRequest::RenameRepository(name) => {
             let actor_id = source();
-            user_program.rename_repo(actor_id, name);
+            let repo_by_name = user_program.get_repo_by_name(name.clone());
 
-            reply(UserActionResponse::RenameRepository { message: "Successfully rename repo".to_string() }, 0)
+            match repo_by_name {
+                Some(repo_by_name) => {
+                    if repo_by_name.id != actor_id {
+                        panic!("Already exists repository by name")
+                    }
+                }
+                None => ()
+            }
+
+            let repo = user_program.get_repo(actor_id);
+
+            match repo {
+                Some(repo) => {
+                    if repo.id == actor_id {
+                        user_program.rename_repo(actor_id, name);
+                    } else {
+                        reply(UserActionResponse::Err, 0).expect("Unable to reply");
+                    }
+                }
+                None => ()
+            }
+
+            reply(UserActionResponse::Ok, 0)
             .expect("Unable to reply");
         }
     }

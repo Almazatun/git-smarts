@@ -6,12 +6,22 @@ use repo_io::*;
 pub mod metafns {
     pub type State = <ProgramMetadata as Metadata>::State;
 
-    pub fn pull(state: State, branch_id: u32) -> Option<Branch> {
+    pub fn branch(state: State, branch_id: u32) -> Option<Branch> {
         if let Some(b) = state.branches.get(&branch_id) {
             return Some(b.clone())
         }
 
         None
+    }
+
+    pub fn branches(state: State) -> Vec<Branch> {
+        let mut result: Vec<Branch> = vec![];
+
+        for (_, b) in state.branches.iter() {
+            result.push(b.clone())
+        }
+
+        result
     }
 
     pub fn get_collaborators(state: State) -> Vec<ActorId> {

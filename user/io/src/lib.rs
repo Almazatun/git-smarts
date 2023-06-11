@@ -44,7 +44,8 @@ pub enum UserActionRequest {
 pub enum UserActionResponse {
     UpdateUserData{ message: String },
     CreateRepository{ message: String },
-    RenameRepository{ message: String },
+    Ok,
+    Err
 }
 
 

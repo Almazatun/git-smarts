@@ -7,7 +7,6 @@ edition = "2021"
 gstd = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68", features = ["debug"] }
 repo-io = { path = "io" }
 user-io = { path = "../user/io"}
-# user-io = { path = "../user/io"}
 primitive-types = { version = "0.12.1", default-features = false }
 scale-info = { version = "2.6.0", default-features = false }
 gear-lib = { git = "https://github.com/gear-dapps/gear-lib.git", tag = "0.3.6" }
@@ -20,11 +19,11 @@ codec = { package = "parity-scale-codec", version = "3.4", default-features = fa
 gtest = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68" }
 # uuid = { version = "1.3.3", default-features = false, features = ["v4"] }
 # getrandom = { version = "0.2", features = ["js"] }
+tokio = { version = "1", features = ["full"] }
 
 [build-dependencies]
 repo-io = { path = "io" }
 user-io = { path = "../user/io"}
-# user-io = { path = "../user/io"}
 gear-wasm-builder = { git = "https://github.com/gear-tech/gear.git", rev = "5c685d0f15c412ab6ee019ceaf7ce084426dfb68" }
 
 [features]
