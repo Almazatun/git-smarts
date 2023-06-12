@@ -235,6 +235,10 @@ async fn main() {
             if !repo_program.is_valid_user(user_id) {
                 panic!("Access denied")
             }
+
+            if actor_id == repo_program.owner {
+                panic!("Sorry you can't add your self as a collaborator")
+            }
             
             repo_program.add_collaborator(actor_id);
 
