@@ -61,8 +61,6 @@ impl Program {
     }
 
     fn is_valid_user(&self, actor_id: ActorId) -> bool {
-        let mut result: bool = false;
-
         if self.owner == actor_id {
             return true
         }
@@ -105,10 +103,10 @@ impl Program {
     }
 
     async fn rename(&mut self, name: String, user_id: ActorId) {
-    if self.owner == user_id {
+    if self.owner != user_id {
         panic!("Access denied")
     }
-    // TODO need to ask need it await here
+
     let result = send_for_reply_as::<UserActionRequest, UserActionResponse>(
         self.user_program_id,
         UserActionRequest::RenameRepository(name.clone()),
@@ -149,7 +147,7 @@ async fn main() {
         RepoActionRequests::Rename(name) => {
             let user_id = source();
 
-            repo_program.rename(name, user_id);
+            repo_program.rename(name, user_id).await;
             reply(RepoActionResponses::Rename { msg: "Successfully rename repo".to_string() }, 0)
            .expect("Unable to reply");
         }
