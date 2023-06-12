@@ -1,7 +1,7 @@
 #![no_std]
 
 use gmeta::{InOut, Metadata, In, TypeInfo};
-use gstd::{ActorId,  prelude::*, CodeId};
+use gstd::{ActorId, prelude::*, CodeId};
 
 pub struct ProgramMetadata;
 
@@ -65,4 +65,6 @@ pub struct CreateRepositoryInput {
 pub struct Repository { 
     pub id: ActorId,
     pub name: String,
+    pub created_at: u64,
+    pub updated_at: u64,
 }

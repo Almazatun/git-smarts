@@ -1,7 +1,7 @@
 #![no_std]
 
 use gmeta::{InOut, Metadata, In, TypeInfo};
-use gstd::{ActorId,  prelude::*};
+use gstd::{ActorId, exec::block_timestamp,  prelude::*};
 
 pub struct ProgramMetadata;
 
@@ -20,7 +20,7 @@ pub struct Program {
     pub name: String,
     pub user_program_id: ActorId,
     pub collaborator: BTreeMap<ActorId, ActorId>,
-    pub branches:  BTreeMap<u32,  Branch>,
+    pub branches:  BTreeMap<String,  Branch>,
 }
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug)]
@@ -59,46 +59,46 @@ pub enum RepoActionResponses {
 
 #[derive(Encode, Debug, Decode, TypeInfo)]
 pub struct RenameBranchInput {
-    pub id: u32,
+    pub id: String,
     pub name: String,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone)]
 pub struct Branch {
-   pub id: u32,
+   pub id: String,
    pub owner: ActorId,
    pub name: String,
-   pub commits: Vec<Commit>
-   // pub created_at: DateTime,
-   // pub updated_at: DateTime,
+   pub commits: Vec<Commit>,
+   pub created_at: u64,
+ pub updated_at: u64,
 }
 
 #[derive(Encode, Decode, TypeInfo, Debug, Clone)]
 pub struct Commit {
-   pub id: u32,
+   pub id: String,
    pub owner: ActorId,
    pub message: String,
    pub hash: String,
    pub description: String,
-   // pub created_at: DateTime,
-   // pub updated_at: DateTime,
+   pub created_at: u64,
+   pub updated_at: u64,
 }
 
-#[derive(Encode, Debug, Decode, TypeInfo)]
+#[derive(Encode, Debug, Decode, TypeInfo, Clone)]
 pub struct CreateBranchInput { 
-    pub id: u32,
+    pub id: String,
     pub name: String,
     pub owner: ActorId,
 }
 
 #[derive(Encode, Debug, Decode, TypeInfo)]
 pub struct DeleteBranchInput { 
-    pub branch_id: u32,
+    pub branch_id: String,
 }
 
 #[derive(Encode, Debug, Decode, TypeInfo)]
 pub struct PushInput {
-    pub branch_id: u32,
+    pub branch_id: String,
     pub description: String,
     pub message: String, 
     pub name: String,
@@ -131,6 +131,8 @@ impl Branch {
             name: create_branch_input.name,
             owner: create_branch_input.owner,
             commits: vec![],
+            created_at: block_timestamp(),
+            updated_at: block_timestamp(),
         }
     }
 

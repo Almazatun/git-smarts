@@ -1,6 +1,14 @@
-use gstd::{debug, prog::ProgramGenerator, ActorId, msg::{load, source, reply}, prelude::*, CodeId};
+use gstd::{
+    debug, 
+    prog::ProgramGenerator, 
+    ActorId, 
+    msg::{load, source, reply}, 
+    prelude::*, 
+    CodeId,
+    exec::block_timestamp,
+};
 use user_io::{UserActionRequest, UserActionResponse, UpdateUserDataInput, InitUserProgram, Repository};
-use repo_io::{InitRepoProgram};
+use repo_io::InitRepoProgram;
 // use uuid::{Uuid};
 
 #[derive(Default, Encode, Decode, TypeInfo, Debug, Clone)]
@@ -40,7 +48,12 @@ impl Program {
                 0,
             ).unwrap();
 
-            self.repos.insert(result.1, Repository { id: result.1, name: create_repo.name });
+            self.repos.insert(result.1, Repository { 
+                id: result.1, 
+                name: create_repo.name,
+                created_at: block_timestamp(),
+                updated_at: block_timestamp(),
+             });
         }
 
     fn rename_repo(&mut self, repo_id: ActorId, name: String) {
@@ -58,8 +71,6 @@ impl Program {
     }
 
     fn get_repo_by_name(&self, name: String) -> Option<Repository> {
-        let mut result: Option<Repository>;
-
         for (_, r) in self.repos.iter() {
             if r.name == name {
                 return Some(r.clone())

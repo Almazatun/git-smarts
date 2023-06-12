@@ -6,7 +6,7 @@ use repo_io::*;
 pub mod metafns {
     pub type State = <ProgramMetadata as Metadata>::State;
 
-    pub fn branch(state: State, branch_id: u32) -> Option<Branch> {
+    pub fn branch(state: State, branch_id: String) -> Option<Branch> {
         if let Some(b) = state.branches.get(&branch_id) {
             return Some(b.clone())
         }
