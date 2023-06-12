@@ -1,6 +1,4 @@
-use core::panicking::panic;
-
-use gstd::{debug, ActorId, msg::{load, send, source, reply, send_for_reply, send_for_reply_as}, exec::{random}, prelude::*};
+use gstd::{debug, ActorId, msg::{load, source, reply, send_for_reply_as}, exec::{random}, prelude::*};
 use repo_io::{
     Branch, 
     Commit, 
@@ -106,19 +104,21 @@ impl Program {
         }
     }
 
-   async fn rename(&mut self, name: String, user_id: ActorId) {
-    if repo_program.owner == user_id {
+    async fn rename(&mut self, name: String, user_id: ActorId) {
+    if self.owner == user_id {
         panic!("Access denied")
     }
     // TODO need to ask need it await here
-    let result = send_for_reply_as(
-        repo_program.user_program_id,
-        UserActionRequest::RenameRepository(name),
+    let result = send_for_reply_as::<UserActionRequest, UserActionResponse>(
+        self.user_program_id,
+        UserActionRequest::RenameRepository(name.clone()),
         0
-    ).await();
+    )
+    .expect("Error in sending a message")
+    .await;
 
     match result {
-        Ok(UserActionResponse::Ok) => Ok(repo_program.rename(name)),
+        Ok(UserActionResponse::Ok) => Ok(()),
         _ => Err("Repository by name already exists"),
     };
 
@@ -147,7 +147,9 @@ async fn main() {
 
     match new_msg {
         RepoActionRequests::Rename(name) => {
-            repo_program.rename(name, user_id).await;
+            let user_id = source();
+
+            repo_program.rename(name, user_id);
             reply(RepoActionResponses::Rename { msg: "Successfully rename repo".to_string() }, 0)
            .expect("Unable to reply");
         }
