@@ -21,6 +21,7 @@ pub struct Program {
     pub state:  BTreeMap<ActorId, ActorId>,
     // user program code id
     pub user_prog_code_id: CodeId,
+    pub repo_prog_code_id: CodeId,
 }
 
 #[derive(Debug, TypeInfo, Decode, Encode)]

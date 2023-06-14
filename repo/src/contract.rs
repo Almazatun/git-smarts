@@ -3,6 +3,7 @@ use gstd::{
     ActorId, 
     msg::{load, source, reply, send_for_reply_as}, 
     exec::{random, block_timestamp}, 
+    
     prelude::*,
 };
 use repo_io::{
@@ -186,7 +187,7 @@ async fn main() {
                 panic!("Access denied")
             }
 
-            if repo_program.is_exist_branch(branch_id) {
+            if !repo_program.is_exist_branch(branch_id) {
                 panic!("Invalid branch id")
             }
 
@@ -203,7 +204,7 @@ async fn main() {
                 panic!("Access denied")
             }
 
-            if repo_program.is_exist_branch(delete_branch_input.branch_id.clone()) {
+            if !repo_program.is_exist_branch(delete_branch_input.branch_id.clone()) {
                 panic!("Invalid branch id")
             }
 
@@ -220,18 +221,15 @@ async fn main() {
                 panic!("Access denied")
             }
 
-            if repo_program.is_exist_branch(push_input.branch_id.clone()) {
+            if !repo_program.is_exist_branch(push_input.branch_id.clone()) {
                 panic!("Invalid branch id")
             }
             
             let commit = Commit{
                 id: gen_id(), 
                 owner: user_id, 
-                message: push_input.message,
                 hash: push_input.hash,
-                description: push_input.description,
                 created_at: block_timestamp(),
-                updated_at: block_timestamp(),
              };
             repo_program.push_commit(push_input.branch_id, commit.clone());
 
@@ -291,9 +289,13 @@ fn gen_id() -> String {
     let random_input: [u8; 32] = [seed; 32];
     let (random, _) = random(random_input).expect("Error in getting random number");
     let bytes = [random[0], random[1], random[2], random[3]];
-    String::from_utf8(bytes.to_vec()).unwrap()
+    bytes_to_unique_string(&bytes)
 }
 
-// fn gen_id() -> String {
-//     nanoid!()
-// }
+fn bytes_to_unique_string(bytes: &[u8; 4]) -> String {
+    let mut unique_string = String::new();
+    for &byte in bytes.iter() {
+        unique_string.push_str(&format!("{:02x}", byte));
+    }
+    unique_string
+}

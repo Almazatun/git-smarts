@@ -15,12 +15,12 @@ pub struct Program {
 }
 
 impl Program {
-    fn new(&self, init_program: InitProgram) -> Self {
+    fn new(&self, owner: ActorId, init_program: InitProgram) -> Self {
         return Self { 
             user_prog_code_id: init_program.user_prog_code_id,
             repo_prog_code_id: init_program.repo_prog_code_id,
             state: BTreeMap::new(),
-            owner: self.owner, 
+            owner, 
         }
     }
 
@@ -47,10 +47,12 @@ impl Program {
 #[no_mangle]
 unsafe extern "C" fn init() {
     let init_program_data: InitProgram  = load().expect("Unable to decode init program");
+    let owner = source();
     debug!("{:?} init program", init_program_data);
 
     let init_program = Program::new(
         &Default::default(),
+        owner,
         init_program_data,
     );
 

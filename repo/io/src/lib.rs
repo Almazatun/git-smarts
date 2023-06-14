@@ -77,11 +77,8 @@ pub struct Branch {
 pub struct Commit {
    pub id: String,
    pub owner: ActorId,
-   pub message: String,
    pub hash: String,
-   pub description: String,
    pub created_at: u64,
-   pub updated_at: u64,
 }
 
 #[derive(Encode, Debug, Decode, TypeInfo, Clone)]
@@ -99,9 +96,6 @@ pub struct DeleteBranchInput {
 #[derive(Encode, Debug, Decode, TypeInfo)]
 pub struct PushInput {
     pub branch_id: String,
-    pub description: String,
-    pub message: String, 
-    pub name: String,
     pub hash: String,
 }
 
